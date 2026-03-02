@@ -12,6 +12,10 @@ chrome.runtime.onMessage.addListener(({ action, name, inputArgs }, _, reply) => 
     }
     if (action == 'LIST_TOOLS') {
       listTools();
+      if ('ontoolchange' in navigator.modelContextTesting.__proto__) {
+        navigator.modelContextTesting.addEventListener('toolchange', listTools);
+        return;
+      }
       navigator.modelContextTesting.registerToolsChangedCallback(listTools);
     }
     if (action == 'EXECUTE_TOOL') {
