@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asset Details</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 1024px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background-color: #1a6bb5;
+      color: #fff;
+      padding: 24px 32px;
+    }
+
+    .card-header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .card-body {
+      padding: 32px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #1a6bb5;
+      margin-bottom: 16px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e9f0;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+      margin-bottom: 32px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+    }
+
+    .field span {
+      font-size: 15px;
+      color: #222;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background-color: #e6f4ea;
+      color: #2d7a3a;
+    }
+
+    .badge-yes {
+      background-color: #e8f0fb;
+      color: #1a6bb5;
+    }
+
+    .hidden-field {
+      /*display: none;*/
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 32px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 620px;
+    }
+
+    thead tr {
+      background-color: #f0f4fa;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #1a6bb5;
+      border-bottom: 2px solid #d0daea;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e9f0;
+      color: #222;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background-color: #f8fafd;
+    }
+
+    .hidden-col {
+      /*display: none;*/
+    }
+
+    @media (max-width: 480px) {
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="card-header">
+      <h1>Asset Details</h1>
+      <p>Asset information, valuation, and assignment</p>
+    </div>
+
+    <div class="card-body">
+
+      <!-- General Information -->
+      <div class="section-title">General Information</div>
+      <div class="field-grid">
+        <div class="field full-width">
+          <label>Asset Name</label>
+          <span>Dell Latitude 5540 Laptop</span>
+        </div>
+        <div class="field">
+          <label>Asset Type</label>
+          <span>Computer Equipment</span>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <span><span class="badge badge-active">Active</span></span>
+        </div>
+        <div class="field">
+          <label>Serial Number</label>
+          <span>DL5540-20240817-00382</span>
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <span>20</span>
+        </div>
+        <div class="enum-field">
+          <label>Asset type</label>
+          <span>Tangible</span>
+        </div>
+        <div class="date-field">
+          <label>Purchase Date</label>
+          <span>01.01.26</span>
+        </div>
+        <div class="field">
+          <label>Asset tag</label>
+          <span>laptop-5540</span>
+        </div>
+        <div class="field full-width">
+          <label>Description</label>
+          <span>14-inch business laptop with Intel Core i7, 16 GB RAM, 512 GB SSD. Assigned to finance department for accounting operations.</span>
+        </div>
+        <div class="field full-width">
+          <label>Notes</label>
+          <span>Device was upgraded to 32 GB RAM in February 2026. Warranty valid until January 2029. IT support ticket #IT-20240912 resolved a display driver issue. Asset is due for next scheduled maintenance in Q3 2026.</span>
+        </div>
+      </div>
+
+      <!-- Parent Asset -->
+      <div class="section-title">Parent Asset</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Name</label>
+          <span>m_2</span>
+        </div>
+        <div class="field">
+          <label>ID</label>
+          <span>ASST00000005</span>
+        </div>
+        <div class="field hidden-field">
+          <label>Key</label>
+          <span>183</span>
+        </div>
+      </div>
+
+      <!-- Attachment -->
+      <div class="section-title">Attachment</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Name</label>
+          <span>Andrei 030625 PDF</span>
+        </div>
+        <div class="field">
+          <label>ID</label>
+          <span>030625</span>
+        </div>
+        <div class="field hidden-field">
+          <label>Key</label>
+          <span>85</span>
+        </div>
+      </div>
+
+      <!-- Valuation -->
+      <div class="section-title">Valuation</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Asset Cost</label>
+          <span>$1,849.00</span>
+        </div>
+        <div class="field">
+          <label>Salvage Value</label>
+          <span>$150.00</span>
+        </div>
+        <div class="field">
+          <label>Depreciate</label>
+          <span><span class="badge badge-yes">Yes</span></span>
+        </div>
+      </div>
+
+      <!-- Allocation -->
+      <div class="section-title">Allocation</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Allocation</label>
+          <span>100%</span>
+        </div>
+        <div class="field">
+          <label>Department</label>
+          <span>Finance &amp; Accounting</span>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <span>San Francisco HQ — Floor 3</span>
+        </div>
+        <div class="field">
+          <label>Class</label>
+          <span>Corporate Assets</span>
+        </div>
+      </div>
+
+      <!-- Depreciation Rules -->
+      <div class="section-title">Depreciation Rules</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Method Name</th>
+              <th>Method ID</th>
+              <th class="hidden-col">Method Key</th>
+              <th>Rate (%)</th>
+              <th>Useful Life (yrs)</th>
+              <th>Posting rule name</th>
+              <th>Convention</th>
+              <th>Is Tax</th>
+              <th>Life Units</th>
+              <th class="hidden-col">Key</th>
+              <th class="hidden-col">ID</th>
+              <th>Journal Book ID</th>
+              <th>Journal ID</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Daily</td>
+              <td>DR</td>
+              <td class="hidden-col">-4</td>
+              <td>5</td>
+              <td>10</td>
+              <td>Tax Accrual Book</td>
+              <td>Half Year</td>
+              <td>Yes</td>
+              <td>Years</td>
+              <td class="hidden-col">1</td>
+              <td class="hidden-col">TAX</td>
+              <td>T</td>
+              <td>TAX</td>
+            </tr>
+            <tr>
+              <td>150% declining balance</td>
+              <td>150DB</td>
+              <td class="hidden-col">-3</td>
+              <td>10</td>
+              <td>2</td>
+              <td>Finance Bank Accrual Book</td>
+              <td>Full Month</td>
+              <td>No</td>
+              <td>Months</td>
+              <td class="hidden-col">4</td>
+              <td class="hidden-col">FIN Bank</td>
+              <td>A</td>
+              <td>BAJ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
