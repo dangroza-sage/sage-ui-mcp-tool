@@ -433,7 +433,10 @@ function setAutoRefreshEnabled(enabled) {
 
 function renderAutoRefreshToggle() {
   autoRefreshToggleBtn.setAttribute('aria-pressed', String(autoRefreshEnabled));
-  autoRefreshToggleBtn.textContent = `Auto-refresh tabs: ${autoRefreshEnabled ? 'On' : 'Off'}`;
+  const label = `Auto-refresh tabs: ${autoRefreshEnabled ? 'On' : 'Off'}`;
+  autoRefreshToggleBtn.textContent = '↻';
+  autoRefreshToggleBtn.setAttribute('aria-label', label);
+  autoRefreshToggleBtn.setAttribute('title', label);
 }
 
 function syncAutoRefreshListeners() {
