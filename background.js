@@ -25,15 +25,26 @@ chrome.tabs.onUpdated.addListener((tabId) => updateBadge(tabId));
 
 async function updateBadge(tabId) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab.id !== tabId) return;
+  if (!tab || tab.id !== tabId) return;
   chrome.action.setBadgeText({ text: '', tabId });
   chrome.action.setBadgeBackgroundColor({ color: '#2563eb' });
-  chrome.tabs.sendMessage(tabId, { action: 'LIST_TOOLS' }).catch(({ message }) => {
-    chrome.runtime.sendMessage({ message });
-  });
+
+  try {
+    await chrome.tabs.sendMessage(tabId, { action: 'LIST_TOOLS' });
+  } catch (error) {
+    const message = error?.message || String(error);
+    if (
+      message.includes('Receiving end does not exist') ||
+      message.includes('Could not establish connection')
+    ) {
+      return;
+    }
+    console.warn('[WebMCP] Failed to update badge for tab', tabId, message);
+  }
 }
 
 chrome.runtime.onMessage.addListener(({ tools }, { tab }) => {
+  if (!tab?.id) return;
   const text = tools?.length ? `${tools.length}` : '';
   chrome.action.setBadgeText({ text, tabId: tab.id });
 });

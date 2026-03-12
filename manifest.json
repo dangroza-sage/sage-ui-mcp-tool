@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "WebMCP - Model Context Tool Inspector",
-  "description": "Inspect, monitor, and execute WebMCP tools manually or with Gemini",
-  "version": "1.9.2",
-  "permissions": ["sidePanel", "activeTab", "scripting"],
+  "name": "Sage UI Smart Assistant",
+  "description": "Integrate WebMCP with your Sage Intacct application for enhanced UI functionality",
+  "version": "0.1.0",
+  "permissions": ["sidePanel", "activeTab", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],
   "update_url": "https://clients2.google.com/service/update2/crx",
   "action": {},

@@ -12,10 +12,33 @@
   </head>
   <body>
     <div class="container">
+      <div class="page-header">
+        <h1>Sage UI Smart Assistant</h1>
+      </div>
       <h2 class="collapsible-header">WebMCP Tools</h2>
       <div class="section-content">
 
       <div id="status"></div>
+
+      <div class="tab-picker-grid">
+        <button id="autoRefreshToggleBtn" class="secondary toggle-button" type="button" aria-pressed="false">
+          Auto-refresh tabs: Off
+        </button>
+        <div class="form-group compact">
+          <label for="sourceTabSelect">Source Tab</label>
+          <select id="sourceTabSelect"></select>
+          <div class="field-hint">Import page text from another open tab.</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input id="toolFilterInput" type="search" placeholder="Filter tools by name or description" />
+        <button id="refreshToolsBtn" class="secondary" type="button">Refresh</button>
+      </div>
+
+      <div class="form-group compact">
+        <button id="importSourceTextBtn" class="secondary" type="button">Insert Source Tab Text into Prompt</button>
+      </div>
 
       <div class="table-container">
         <table id="resultsTable">
@@ -53,12 +76,19 @@
         <select id="toolNames"></select>
       </div>
 
+      <div id="selectedToolDetails" class="tool-details is-hidden">
+        <div class="tool-details-header">Selected Tool Details</div>
+        <div id="selectedToolDescription" class="tool-description"></div>
+        <pre id="selectedToolSchema"></pre>
+      </div>
+
       <div class="form-group">
         <label for="inputArgsText">Input Arguments</label>
         <textarea id="inputArgsText">{"text": "hello world"}</textarea>
       </div>
 
       <div class="form-group">
+        <button id="formatArgsBtn" class="secondary" type="button">Format JSON</button>
         <button id="executeBtn">Execute Tool</button>
       </div>
 

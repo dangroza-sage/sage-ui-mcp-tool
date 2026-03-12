@@ -7,6 +7,27 @@ console.debug('[WebMCP] Content script injected');
 
 chrome.runtime.onMessage.addListener(({ action, name, inputArgs }, _, reply) => {
   try {
+    if (action == 'GET_TAB_CAPABILITIES') {
+      const hasMcp = Boolean(navigator.modelContextTesting);
+      const tools = hasMcp ? navigator.modelContextTesting.listTools() : [];
+      reply({
+        title: document.title,
+        url: location.href,
+        hasMcp,
+        toolsCount: tools.length,
+      });
+      return;
+    }
+
+    if (action == 'EXTRACT_PAGE_TEXT') {
+      reply({
+        title: document.title,
+        url: location.href,
+        ...extractPageText(),
+      });
+      return;
+    }
+
     if (!navigator.modelContextTesting) {
       throw new Error('Error: You must run Chrome with the "WebMCP for testing" flag enabled.');
     }
@@ -70,3 +91,15 @@ window.addEventListener('toolactivated', ({ toolName }) => {
 window.addEventListener('toolcancel', ({ toolName }) => {
   console.debug(`[WebMCP] Tool "${toolName}" execution is cancelled.`);
 });
+
+function extractPageText() {
+  const selectedText = window.getSelection()?.toString().trim() || '';
+  const bodyText = document.body?.innerText?.trim() || '';
+  const text = (selectedText || bodyText).replace(/\s+\n/g, '\n').trim();
+  const limit = 12000;
+  return {
+    text: text.slice(0, limit),
+    source: selectedText ? 'selection' : 'page',
+    truncated: text.length > limit,
+  };
+}

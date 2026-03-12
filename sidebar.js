@@ -8,11 +8,20 @@ import { GoogleGenAI } from './js-genai.js';
 const statusDiv = document.getElementById('status');
 const tbody = document.getElementById('tableBody');
 const thead = document.getElementById('tableHeaderRow');
+const autoRefreshToggleBtn = document.getElementById('autoRefreshToggleBtn');
+const sourceTabSelect = document.getElementById('sourceTabSelect');
+const toolFilterInput = document.getElementById('toolFilterInput');
+const refreshToolsBtn = document.getElementById('refreshToolsBtn');
+const importSourceTextBtn = document.getElementById('importSourceTextBtn');
 const copyToClipboard = document.getElementById('copyToClipboard');
 const copyAsScriptToolConfig = document.getElementById('copyAsScriptToolConfig');
 const copyAsJSON = document.getElementById('copyAsJSON');
 const toolNames = document.getElementById('toolNames');
+const selectedToolDetails = document.getElementById('selectedToolDetails');
+const selectedToolDescription = document.getElementById('selectedToolDescription');
+const selectedToolSchema = document.getElementById('selectedToolSchema');
 const inputArgsText = document.getElementById('inputArgsText');
+const formatArgsBtn = document.getElementById('formatArgsBtn');
 const executeBtn = document.getElementById('executeBtn');
 const toolResults = document.getElementById('toolResults');
 const userPromptText = document.getElementById('userPromptText');
@@ -22,84 +31,41 @@ const resetBtn = document.getElementById('resetBtn');
 const apiKeyBtn = document.getElementById('apiKeyBtn');
 const promptResults = document.getElementById('promptResults');
 
-// Inject content script first.
-(async () => {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await chrome.tabs.sendMessage(tab.id, { action: 'LIST_TOOLS' });
-  } catch (error) {
-    const statusDiv = document.getElementById('status');
-    statusDiv.textContent = error;
-    statusDiv.hidden = false;
-    copyToClipboard.hidden = true;
-  }
-})();
+const AUTO_REFRESH_STORAGE_KEY = 'autoRefreshTabsEnabled';
 
-let currentTools;
+let currentTools = [];
+let filteredTools = [];
+let currentPageUrl = '';
+let selectedToolName = '';
+let windowTabs = [];
+let currentTargetTabId;
+let selectedSourceTabId;
+let tabSupportById = new Map();
+let autoRefreshEnabled = localStorage.getItem(AUTO_REFRESH_STORAGE_KEY) === 'true';
+let autoRefreshTimeoutId;
 
 let userPromptPendingId = 0;
 let lastSuggestedUserPrompt = '';
 
+init().catch((error) => {
+  setStatus(String(error), 'error');
+  copyToClipboard.hidden = true;
+});
+
 // Listen for the results coming back from content.js
-chrome.runtime.onMessage.addListener(async ({ message, tools, url }, sender) => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (sender.tab && sender.tab.id !== tab.id) return;
+chrome.runtime.onMessage.addListener(({ message, tools, url }, sender) => {
+  if (sender.tab && sender.tab.id !== currentTargetTabId) return;
 
-  tbody.innerHTML = '';
-  thead.innerHTML = '';
-  toolNames.innerHTML = '';
+  setStatus(message || '', message ? 'error' : '');
 
-  statusDiv.textContent = message;
-  statusDiv.hidden = !message;
+  if (!tools) return;
 
-  const haveNewTools = JSON.stringify(currentTools) !== JSON.stringify(tools);
+  const nextTools = tools || [];
+  const haveNewTools = JSON.stringify(currentTools) !== JSON.stringify(nextTools);
 
-  currentTools = tools;
-
-  if (!tools || tools.length === 0) {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td colspan="100%"><i>No tools registered yet in ${url || tab.url}</i></td>`;
-    tbody.appendChild(row);
-    inputArgsText.value = '';
-    inputArgsText.disabled = true;
-    toolNames.disabled = true;
-    executeBtn.disabled = true;
-    copyToClipboard.hidden = true;
-    return;
-  }
-
-  inputArgsText.disabled = false;
-  toolNames.disabled = false;
-  executeBtn.disabled = false;
-  copyToClipboard.hidden = false;
-
-  const keys = Object.keys(tools[0]);
-  keys.forEach((key) => {
-    const th = document.createElement('th');
-    th.textContent = key;
-    thead.appendChild(th);
-  });
-
-  tools.forEach((item) => {
-    const row = document.createElement('tr');
-    keys.forEach((key) => {
-      const td = document.createElement('td');
-      try {
-        td.innerHTML = `<pre>${JSON.stringify(JSON.parse(item[key]), '', '  ')}</pre>`;
-      } catch (error) {
-        td.textContent = item[key];
-      }
-      row.appendChild(td);
-    });
-    tbody.appendChild(row);
-
-    const option = document.createElement('option');
-    option.textContent = `"${item.name}"`;
-    option.value = item.name;
-    option.dataset.inputSchema = item.inputSchema;
-    toolNames.appendChild(option);
-  });
-  updateDefaultValueForInputArgs();
+  currentTools = nextTools;
+  currentPageUrl = url || getTabById(currentTargetTabId)?.url || currentPageUrl;
+  renderTools({ haveNewTools });
 
   if (haveNewTools) suggestUserPrompt();
 });
@@ -115,7 +81,7 @@ copyAsScriptToolConfig.onclick = async () => {
 script_tools {
   name: "${tool.name}"
   description: "${tool.description}"
-  input_schema: ${JSON.stringify(tool.inputSchema || { type: 'object', properties: {} })}
+  input_schema: ${JSON.stringify(parseInputSchema(tool.inputSchema))}
 }`;
     })
     .join('\r\n');
@@ -127,9 +93,7 @@ copyAsJSON.onclick = async () => {
     return {
       name: tool.name,
       description: tool.description,
-      inputSchema: tool.inputSchema
-        ? JSON.parse(tool.inputSchema)
-        : { type: 'object', properties: {} },
+      inputSchema: parseInputSchema(tool.inputSchema),
     };
   });
   await navigator.clipboard.writeText(JSON.stringify(tools, '', '  '));
@@ -153,7 +117,6 @@ async function initGenAI() {
   promptBtn.disabled = !localStorage.apiKey;
   resetBtn.disabled = !localStorage.apiKey;
 }
-initGenAI();
 
 async function suggestUserPrompt() {
   if (currentTools.length == 0 || !genAI || userPromptText.value !== lastSuggestedUserPrompt)
@@ -205,7 +168,10 @@ promptBtn.onclick = async () => {
 let trace = [];
 
 async function promptAI() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const targetTabId = await syncCurrentTargetTab();
+  if (!targetTabId) {
+    throw new Error('No active target tab found.');
+  }
 
   chat ??= genAI.chats.create({ model: localStorage.model });
 
@@ -236,7 +202,7 @@ async function promptAI() {
         const inputArgs = JSON.stringify(args);
         logPrompt(`AI calling tool "${name}" with ${inputArgs}`);
         try {
-          const result = await executeTool(tab.id, name, inputArgs);
+          const result = await executeTool(targetTabId, name, inputArgs);
           toolResponses.push({ functionResponse: { name, response: { result } } });
           logPrompt(`Tool "${name}" result: ${result}`);
         } catch (e) {
@@ -282,17 +248,93 @@ traceBtn.onclick = async () => {
 
 executeBtn.onclick = async () => {
   toolResults.textContent = '';
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const name = toolNames.selectedOptions[0].value;
-  const inputArgs = inputArgsText.value;
-  toolResults.textContent = await executeTool(tab.id, name, inputArgs).catch(
+  const name = toolNames.selectedOptions[0]?.value;
+  const targetTabId = await syncCurrentTargetTab();
+  if (!name || !targetTabId) return;
+
+  let parsedArgs;
+  try {
+    parsedArgs = parseInputArgs();
+  } catch {
+    return;
+  }
+
+  const inputArgs = JSON.stringify(parsedArgs);
+  inputArgsText.value = JSON.stringify(parsedArgs, '', ' ');
+  setStatus(`Executing "${name}"…`, 'info');
+
+  const result = await executeTool(targetTabId, name, inputArgs).catch(
     (error) => `⚠️ Error: "${error}"`,
+  );
+  toolResults.textContent = result;
+  setStatus(
+    String(result).startsWith('⚠️ Error:') ? `Execution failed for "${name}".` : `Executed "${name}".`,
+    String(result).startsWith('⚠️ Error:') ? 'error' : 'success',
   );
 };
 
+sourceTabSelect.onchange = () => {
+  selectedSourceTabId = Number(sourceTabSelect.value);
+};
+
+autoRefreshToggleBtn.onclick = () => {
+  setAutoRefreshEnabled(!autoRefreshEnabled);
+};
+
+toolNames.onchange = updateDefaultValueForInputArgs;
+toolFilterInput.oninput = () => renderTools();
+
+refreshToolsBtn.onclick = async () => {
+  setStatus('Refreshing tabs and tools…', 'info');
+  await refreshTabs();
+  await refreshTargetTools();
+};
+
+importSourceTextBtn.onclick = async () => {
+  if (!selectedSourceTabId) return;
+
+  setStatus('Importing text from source tab…', 'info');
+
+  try {
+    const result = await sendMessageToTab(selectedSourceTabId, { action: 'EXTRACT_PAGE_TEXT' });
+    const title = result.title || getTabById(selectedSourceTabId)?.title || 'Source tab';
+    const importedBlock = [
+      `Source tab: ${title}`,
+      result.url ? `URL: ${result.url}` : undefined,
+      `Text source: ${result.source === 'selection' ? 'current selection' : 'page content'}`,
+      '',
+      result.text || '(No readable text found)',
+      result.truncated ? '[Text truncated by extension]' : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    userPromptText.value = [userPromptText.value.trim(), importedBlock].filter(Boolean).join('\n\n');
+    setStatus(`Imported text from "${title}".`, 'success');
+  } catch (error) {
+    setStatus(`Could not read the selected source tab: ${error.message || error}`, 'error');
+  }
+};
+
+formatArgsBtn.onclick = () => {
+  try {
+    const parsedArgs = parseInputArgs();
+    inputArgsText.value = JSON.stringify(parsedArgs, '', ' ');
+    setStatus('Input JSON formatted.', 'success');
+  } catch {}
+};
+
+function updateDefaultValueForInputArgs() {
+  selectedToolName = toolNames.value;
+  const inputSchema = toolNames.selectedOptions[0]?.dataset.inputSchema || '{}';
+  const template = generateTemplateFromSchema(parseInputSchema(inputSchema));
+  inputArgsText.value = JSON.stringify(template, '', ' ');
+  renderSelectedToolDetails();
+}
+
 async function executeTool(tabId, name, inputArgs) {
   try {
-    const result = await chrome.tabs.sendMessage(tabId, {
+    const result = await sendMessageToTab(tabId, {
       action: 'EXECUTE_TOOL',
       name,
       inputArgs,
@@ -301,23 +343,407 @@ async function executeTool(tabId, name, inputArgs) {
   } catch (error) {
     if (!error.message.includes('message channel is closed')) throw error;
   }
-  // A navigation was triggered. The result will be on the next document.
-  // TODO: Handle case where a new tab is opened.
   await waitForPageLoad(tabId);
-  return await chrome.tabs.sendMessage(tabId, {
+  return await sendMessageToTab(tabId, {
     action: 'GET_CROSS_DOCUMENT_SCRIPT_TOOL_RESULT',
   });
 }
 
-toolNames.onchange = updateDefaultValueForInputArgs;
-
-function updateDefaultValueForInputArgs() {
-  const inputSchema = toolNames.selectedOptions[0].dataset.inputSchema || '{}';
-  const template = generateTemplateFromSchema(JSON.parse(inputSchema));
-  inputArgsText.value = JSON.stringify(template, '', ' ');
+async function init() {
+  renderAutoRefreshToggle();
+  syncAutoRefreshListeners();
+  await initGenAI();
+  await refreshTabs();
+  await refreshTargetTools();
 }
 
-// Utils
+async function refreshTabs() {
+  currentTargetTabId = await syncCurrentTargetTab();
+  const tabs = await chrome.tabs.query({ currentWindow: true });
+  windowTabs = tabs
+    .filter((tab) => typeof tab.id === 'number')
+    .sort(
+      (left, right) =>
+        Number(Boolean(right.active)) - Number(Boolean(left.active)) || left.index - right.index,
+    );
+
+  if (windowTabs.length === 0) {
+    currentTargetTabId = undefined;
+    selectedSourceTabId = undefined;
+    tabSupportById = new Map();
+    currentTools = [];
+    renderTabSelectors();
+    renderTools();
+    setStatus('No tabs available in the current window.', 'error');
+    return;
+  }
+
+  if (!windowTabs.some((tab) => tab.id === selectedSourceTabId)) {
+    selectedSourceTabId = getPreferredSourceTabId();
+  }
+
+  const supportEntries = await Promise.all(
+    windowTabs.map(async (tab) => [tab.id, await getTabSupport(tab.id, { refresh: true })]),
+  );
+  tabSupportById = new Map(supportEntries);
+  renderTabSelectors();
+}
+
+async function refreshTargetTools() {
+  const targetTabId = await syncCurrentTargetTab();
+  if (!targetTabId) {
+    currentTools = [];
+    renderTools();
+    return;
+  }
+
+  const tab = getTabById(targetTabId);
+  currentPageUrl = tab?.url || currentPageUrl;
+  const support = await getTabSupport(targetTabId, { refresh: true });
+  if (support.url) {
+    currentPageUrl = support.url;
+  }
+
+  if (!support.reachable) {
+    currentTools = [];
+    renderTools();
+    setStatus('Current active tab cannot be accessed by the extension.', 'error');
+    return;
+  }
+
+  if (!support.hasMcp) {
+    currentTools = [];
+    renderTools();
+    setStatus('Current active tab is reachable but does not expose WebMCP support.', 'info');
+    return;
+  }
+
+  currentTools = [];
+  renderTools();
+  setStatus(`Loading tools from "${tab?.title || 'current tab'}"…`, 'info');
+  await sendMessageToTab(targetTabId, { action: 'LIST_TOOLS' });
+}
+
+function setAutoRefreshEnabled(enabled) {
+  autoRefreshEnabled = enabled;
+  localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(enabled));
+  renderAutoRefreshToggle();
+  syncAutoRefreshListeners();
+}
+
+function renderAutoRefreshToggle() {
+  autoRefreshToggleBtn.setAttribute('aria-pressed', String(autoRefreshEnabled));
+  autoRefreshToggleBtn.textContent = `Auto-refresh tabs: ${autoRefreshEnabled ? 'On' : 'Off'}`;
+}
+
+function syncAutoRefreshListeners() {
+  chrome.tabs.onActivated.removeListener(handleAutoRefreshEvent);
+  chrome.tabs.onUpdated.removeListener(handleAutoRefreshEvent);
+  chrome.tabs.onCreated.removeListener(handleAutoRefreshEvent);
+  chrome.tabs.onRemoved.removeListener(handleAutoRefreshEvent);
+
+  if (!autoRefreshEnabled) {
+    return;
+  }
+
+  chrome.tabs.onActivated.addListener(handleAutoRefreshEvent);
+  chrome.tabs.onUpdated.addListener(handleAutoRefreshEvent);
+  chrome.tabs.onCreated.addListener(handleAutoRefreshEvent);
+  chrome.tabs.onRemoved.addListener(handleAutoRefreshEvent);
+}
+
+function handleAutoRefreshEvent() {
+  scheduleAutoRefresh();
+}
+
+function scheduleAutoRefresh() {
+  clearTimeout(autoRefreshTimeoutId);
+  autoRefreshTimeoutId = setTimeout(async () => {
+    try {
+      await refreshTabs();
+      await refreshTargetTools();
+    } catch (error) {
+      setStatus(String(error), 'error');
+    }
+  }, 250);
+}
+
+async function getTabSupport(tabId, { refresh = false } = {}) {
+  if (!refresh && tabSupportById.has(tabId)) {
+    return tabSupportById.get(tabId);
+  }
+
+  let support;
+  try {
+    const result = await sendMessageToTab(tabId, { action: 'GET_TAB_CAPABILITIES' });
+    support = {
+      reachable: true,
+      hasMcp: Boolean(result?.hasMcp),
+      toolsCount: result?.toolsCount || 0,
+      title: result?.title,
+      url: result?.url,
+    };
+  } catch (error) {
+    support = {
+      reachable: false,
+      hasMcp: false,
+      toolsCount: 0,
+      error: error.message || String(error),
+    };
+  }
+
+  tabSupportById.set(tabId, support);
+  return support;
+}
+
+async function sendMessageToTab(tabId, payload, { allowInjection = true } = {}) {
+  try {
+    return await chrome.tabs.sendMessage(tabId, payload);
+  } catch (error) {
+    if (!allowInjection || !shouldInjectContentScript(error)) {
+      throw error;
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['content.js'],
+    });
+
+    return await chrome.tabs.sendMessage(tabId, payload);
+  }
+}
+
+function shouldInjectContentScript(error) {
+  const message = error?.message || String(error);
+  return (
+    message.includes('Receiving end does not exist') ||
+    message.includes('Could not establish connection')
+  );
+}
+
+function renderTabSelectors() {
+  renderTabSelect(sourceTabSelect, selectedSourceTabId, 'No source tab available');
+  importSourceTextBtn.disabled = !selectedSourceTabId;
+}
+
+function renderTabSelect(select, selectedId, emptyLabel) {
+  select.innerHTML = '';
+
+  if (windowTabs.length === 0) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = emptyLabel;
+    select.appendChild(option);
+    select.disabled = true;
+    return;
+  }
+
+  select.disabled = false;
+  windowTabs.forEach((tab) => {
+    const option = document.createElement('option');
+    option.value = String(tab.id);
+    option.textContent = formatTabOptionLabel(tab);
+    select.appendChild(option);
+  });
+
+  if (selectedId != null && windowTabs.some((tab) => tab.id === selectedId)) {
+    select.value = String(selectedId);
+  }
+}
+
+function formatTabOptionLabel(tab) {
+  const support = tabSupportById.get(tab.id) || { reachable: false, hasMcp: false };
+  const icon = support.reachable ? (support.hasMcp ? '🟢' : '⚪️') : '🔒';
+  const title = truncateText(tab.title || 'Untitled tab', 42);
+  const hostname = getHostname(tab.url);
+  return hostname ? `${icon} ${title} — ${hostname}` : `${icon} ${title}`;
+}
+
+async function syncCurrentTargetTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  currentTargetTabId = tab?.id;
+  if (tab?.url) {
+    currentPageUrl = tab.url;
+  }
+  return currentTargetTabId;
+}
+
+function parseInputSchema(inputSchema) {
+  if (!inputSchema) {
+    return { type: 'object', properties: {} };
+  }
+
+  if (typeof inputSchema === 'object') {
+    return inputSchema;
+  }
+
+  try {
+    return JSON.parse(inputSchema);
+  } catch {
+    return { type: 'object', properties: {} };
+  }
+}
+
+function getPreferredSourceTabId() {
+  return windowTabs.find((tab) => tab.id !== currentTargetTabId)?.id || windowTabs[0]?.id;
+}
+
+function getTabById(tabId) {
+  return windowTabs.find((tab) => tab.id === tabId);
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
+function getHostname(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return '';
+  }
+}
+
+function renderTools({ haveNewTools = false } = {}) {
+  tbody.innerHTML = '';
+  thead.innerHTML = '';
+  toolNames.innerHTML = '';
+
+  const previousSelection = selectedToolName || toolNames.value;
+  filteredTools = filterTools(currentTools, toolFilterInput.value);
+
+  copyToClipboard.hidden = currentTools.length === 0;
+
+  if (currentTools.length === 0) {
+    renderEmptyState(`No tools registered yet in ${currentPageUrl || 'this tab'}`);
+    inputArgsText.value = '';
+    inputArgsText.disabled = true;
+    toolNames.disabled = true;
+    executeBtn.disabled = true;
+    formatArgsBtn.disabled = true;
+    renderSelectedToolDetails();
+    return;
+  }
+
+  if (filteredTools.length === 0) {
+    renderEmptyState('No tools match the current filter.');
+    inputArgsText.disabled = true;
+    toolNames.disabled = true;
+    executeBtn.disabled = true;
+    formatArgsBtn.disabled = true;
+    renderSelectedToolDetails();
+    return;
+  }
+
+  inputArgsText.disabled = false;
+  toolNames.disabled = false;
+  executeBtn.disabled = false;
+  formatArgsBtn.disabled = false;
+
+  const keys = Object.keys(filteredTools[0]);
+  keys.forEach((key) => {
+    const th = document.createElement('th');
+    th.textContent = key;
+    thead.appendChild(th);
+  });
+
+  filteredTools.forEach((item) => {
+    const row = document.createElement('tr');
+    keys.forEach((key) => {
+      const td = document.createElement('td');
+      try {
+        td.innerHTML = `<pre>${JSON.stringify(JSON.parse(item[key]), '', '  ')}</pre>`;
+      } catch (error) {
+        td.textContent = item[key];
+      }
+      row.appendChild(td);
+    });
+    tbody.appendChild(row);
+
+    const option = document.createElement('option');
+    option.textContent = `"${item.name}"`;
+    option.value = item.name;
+    option.dataset.inputSchema = item.inputSchema;
+    toolNames.appendChild(option);
+  });
+
+  selectedToolName = filteredTools.some((tool) => tool.name === previousSelection)
+    ? previousSelection
+    : filteredTools[0].name;
+  toolNames.value = selectedToolName;
+  renderSelectedToolDetails();
+
+  if (haveNewTools || selectedToolName !== previousSelection || !inputArgsText.value.trim()) {
+    updateDefaultValueForInputArgs();
+  }
+}
+
+function filterTools(tools, query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return tools;
+  return tools.filter((tool) => {
+    return [tool.name, tool.description, tool.inputSchema]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(normalizedQuery));
+  });
+}
+
+function renderEmptyState(text) {
+  const row = document.createElement('tr');
+  row.innerHTML = `<td colspan="100%"><i>${text}</i></td>`;
+  tbody.appendChild(row);
+}
+
+function renderSelectedToolDetails() {
+  const selectedTool = currentTools.find((tool) => tool.name === selectedToolName);
+  if (!selectedTool) {
+    selectedToolDetails.classList.add('is-hidden');
+    selectedToolDescription.textContent = '';
+    selectedToolSchema.textContent = '';
+    return;
+  }
+
+  selectedToolDetails.classList.remove('is-hidden');
+  selectedToolDescription.textContent = selectedTool.description || 'No description provided.';
+
+  let parsedSchema;
+  try {
+    parsedSchema = selectedTool.inputSchema
+      ? JSON.parse(selectedTool.inputSchema)
+      : { type: 'object', properties: {} };
+  } catch {
+    parsedSchema = selectedTool.inputSchema;
+  }
+
+  selectedToolSchema.textContent = JSON.stringify(parsedSchema, '', '  ');
+}
+
+function parseInputArgs() {
+  const rawInput = inputArgsText.value.trim();
+  if (!rawInput) {
+    const error = new Error('Input arguments are required and must be valid JSON.');
+    setStatus(error.message, 'error');
+    throw error;
+  }
+
+  try {
+    return JSON.parse(rawInput);
+  } catch (error) {
+    setStatus(`Invalid JSON input: ${error.message}`, 'error');
+    inputArgsText.focus();
+    throw error;
+  }
+}
+
+function setStatus(message = '', state = '') {
+  statusDiv.textContent = message;
+  statusDiv.hidden = !message;
+  if (state) {
+    statusDiv.dataset.state = state;
+  } else {
+    delete statusDiv.dataset.state;
+  }
+}
 
 function logPrompt(text) {
   promptResults.textContent += `${text}\n`;
@@ -335,11 +761,14 @@ function getFormattedDate() {
 }
 
 function getConfig() {
+  const targetTab = getTabById(currentTargetTabId);
   const systemInstruction = [
     'You are an assistant embedded in a browser tab.',
-    'User prompts typically refer to the current tab unless stated otherwise.',
+    'User prompts typically refer to the current active tab unless stated otherwise.',
     'Use your tools to query page content when you need it.',
     `Today's date is: ${getFormattedDate()}`,
+    `Target tab title: ${targetTab?.title || 'Unknown'}`,
+    `Target tab URL: ${targetTab?.url || currentPageUrl || 'Unknown'}`,
     'CRITICAL RULE: Whenever the user provides a relative date (e.g., "next Monday", "tomorrow", "in 3 days"),  you must calculate the exact calendar date based on today\'s date.',
   ];
 
@@ -347,9 +776,7 @@ function getConfig() {
     return {
       name: tool.name,
       description: tool.description,
-      parametersJsonSchema: tool.inputSchema
-        ? JSON.parse(tool.inputSchema)
-        : { type: 'object', properties: {} },
+      parametersJsonSchema: parseInputSchema(tool.inputSchema),
     };
   });
   return { systemInstruction, tools: [{ functionDeclarations }] };

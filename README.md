@@ -40,14 +40,26 @@ Install the extension directly via the [Chrome Web Store](https://chromewebstore
     Click the extension's action icon (the puzzle piece or pinned icon) in the Chrome toolbar. This will open the **Side Panel**.
 
 3.  **Inspect Tools:**
+    * The current active tab is always the tool-execution target.
+    * Choose a **Source Tab** if you want to pull text from another open page into the prompt box.
     * The extension will inject a content script to query the page.
     * A table will appear listing all available tools found on the page.
+    * The source tab dropdown uses status icons: `🟢` WebMCP available, `⚪️` readable tab without WebMCP, `🔒` restricted or unreachable.
+    * Use the filter box to narrow the list by tool name, description, or schema.
+    * Use **Refresh** to re-query tab status and reload tools for the current active tab.
 
 4.  **Execute a Tool:**
-    * **Tool:** Select the desired tool from the dropdown menu.
+    * **Tool:** Select the desired tool from the dropdown menu for the current active tab.
+    * **Selected Tool Details:** Review the tool description and JSON schema before running it.
     * **Input Arguments:** Enter the arguments for the tool in the text area.
         * *Note:* The input must be valid JSON (e.g., `{"text": "hello world"}`).
+        * Use **Format JSON** to normalize the payload before sending it.
     * Click **Execute Tool**.
+
+5.  **Use Text From Another Tab:**
+    * Pick a **Source Tab** from the current window.
+    * Click **Insert Source Tab Text into Prompt**.
+    * The extension will import the current selection from that tab when available, otherwise it falls back to the page text.
 
 ## Disclaimer
 

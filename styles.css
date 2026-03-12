@@ -15,6 +15,35 @@ h2 {
   font-size: 18px;
 }
 
+h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.toggle-button {
+  white-space: nowrap;
+  padding: 4px 8px;
+  min-height: 36px;
+  font-size: 12px;
+  line-height: 1.1;
+  width: fit-content;
+  align-self: flex-start;
+}
+
+.toggle-button[aria-pressed='true'] {
+  background-color: #2563eb !important;
+  color: #fff;
+  outline-color: #2563eb;
+}
+
 button {
   padding: 8px 10px;
   background-color: #2563eb;
@@ -56,6 +85,40 @@ button:hover {
   font-size: 12px;
   min-height: 15px;
   color: red;
+}
+
+#status[data-state='info'] {
+  color: #2563eb;
+}
+
+#status[data-state='success'] {
+  color: #15803d;
+}
+
+#status[data-state='error'] {
+  color: #dc2626;
+}
+
+.tab-picker-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.toolbar input {
+  flex: 1;
+}
+
+.toolbar button {
+  flex-shrink: 0;
 }
 
 .table-container {
@@ -107,6 +170,47 @@ tr:nth-child(even) {
 
 .form-group {
   margin-bottom: 10px;
+}
+
+.form-group.compact {
+  margin-bottom: 8px;
+}
+
+.field-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.tool-details {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.tool-details-header {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.tool-description {
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.tool-details pre {
+  margin: 0;
+  max-height: 200px;
+  overflow: auto;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 label {
@@ -231,6 +335,10 @@ tbody.prettify pre {
     color: #e5e5e5;
   }
 
+  h1 {
+    color: #f9fafb;
+  }
+
   select,
   textarea,
   input {
@@ -252,6 +360,10 @@ tbody.prettify pre {
 
   ::placeholder {
     color: #6b7280;
+  }
+
+  .field-hint {
+    color: #9ca3af;
   }
 
   .table-container {
@@ -296,6 +408,12 @@ tbody.prettify pre {
     outline-color: #93c5fd;
   }
 
+  .toggle-button[aria-pressed='true'] {
+    background-color: #3b82f6 !important;
+    outline-color: #3b82f6;
+    color: #fff;
+  }
+
   select:disabled,
   textarea:disabled,
   button:disabled {
@@ -312,5 +430,27 @@ tbody.prettify pre {
 
   #status {
     color: #f87171; /* Lighter red for readability on dark */
+  }
+
+  #status[data-state='info'] {
+    color: #60a5fa;
+  }
+
+  #status[data-state='success'] {
+    color: #4ade80;
+  }
+
+  #status[data-state='error'] {
+    color: #f87171;
+  }
+
+  .tool-details {
+    background: #1e1e1e;
+    border-color: #404040;
+  }
+
+  .tool-details pre {
+    background: #111827;
+    color: #e5e7eb;
   }
 }
