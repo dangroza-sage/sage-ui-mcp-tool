@@ -35,7 +35,7 @@ const promptResults = document.getElementById('promptResults');
 
 const AUTO_REFRESH_STORAGE_KEY = 'autoRefreshTabsEnabled';
 const FILL_DATA_PROMPT_TEMPLATE_STORAGE_KEY = 'fillDataPromptTemplate';
-const DEFAULT_FILL_DATA_PROMPT_TEMPLATE = 'Fill the form based on follwing information:';
+const DEFAULT_FILL_DATA_PROMPT_TEMPLATE = 'Please clear the form and then fill the form based on the following data:';
 
 let currentTools = [];
 let filteredTools = [];

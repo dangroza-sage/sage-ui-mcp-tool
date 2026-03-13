@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asset Details (Car)</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 1024px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background-color: #2e7d52;
+      color: #fff;
+      padding: 24px 32px;
+    }
+
+    .card-header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .card-body {
+      padding: 32px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #2e7d52;
+      margin-bottom: 16px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e9f0;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+      margin-bottom: 32px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+    }
+
+    .field span {
+      font-size: 15px;
+      color: #222;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background-color: #e6f4ea;
+      color: #2e7d52;
+    }
+
+    .badge-inactive {
+      background-color: #fdecea;
+      color: #b71c1c;
+    }
+
+    .badge-yes {
+      background-color: #e8f5e9;
+      color: #2e7d52;
+    }
+
+    .badge-no {
+      background-color: #fff3e0;
+      color: #e65100;
+    }
+
+    .hidden-field {
+      /*display: none;*/
+    }
+
+    /* Depreciation rule cards */
+    .depreciation-rules-wrapper {
+      margin-bottom: 32px;
+    }
+
+    .depreciation-rule {
+      padding: 20px 0;
+    }
+
+    .depreciation-rule + .depreciation-rule {
+      border-top: 1px solid #d0daea;
+    }
+
+    .rule-sub-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #555;
+      margin-bottom: 14px;
+    }
+
+    .rule-field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px 24px;
+    }
+
+    .rule-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .rule-field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+    }
+
+    .rule-field span {
+      font-size: 14px;
+      color: #222;
+    }
+
+    .rule-field.hidden-field {
+      /*display: none;*/
+    }
+
+    .posting-rule-block {
+      margin-top: 14px;
+      background: #f8fafd;
+      border: 1px solid #e5e9f0;
+      border-radius: 6px;
+      padding: 14px 18px;
+    }
+
+    .posting-rule-block .rule-sub-title {
+      margin-bottom: 12px;
+      color: #2e7d52;
+    }
+
+    @media (max-width: 640px) {
+      .field-grid,
+      .rule-field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="card-header">
+      <h1>Asset Details</h1>
+      <p>Asset information, valuation, and assignment</p>
+    </div>
+
+    <div class="card-body">
+
+      <!-- General Information -->
+      <div class="section-title">General Information</div>
+      <div class="field-grid">
+        <div class="field full-width">
+          <label>Asset Name</label>
+          <span>Ford Transit Connect Cargo Van</span>
+        </div>
+        <div class="field">
+          <label>Asset Type</label>
+          <span>Fleet Vehicle</span>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <span><span class="badge badge-active">Active</span></span>
+        </div>
+        <div class="field">
+          <label>Serial Number</label>
+          <span>FTC-20230301-00114</span>
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <span>3</span>
+        </div>
+        <div class="field">
+          <label>Asset type</label>
+          <span>Tangible</span>
+        </div>
+        <div class="field">
+          <label>Purchase Date</label>
+          <span>15.03.23</span>
+        </div>
+        <div class="field">
+          <label>Asset Tag</label>
+          <span>van-transit-114</span>
+        </div>
+        <div class="field full-width">
+          <label>Description</label>
+          <span>Ford Transit Connect cargo van used for on-site equipment delivery and field service operations across the Chicago metro area. Registered under company fleet policy #FL-2023-077.</span>
+        </div>
+        <div class="field full-width">
+          <label>Notes</label>
+          <span>Vehicle underwent full service inspection in January 2026. Insurance policy renewed through December 2026. Assigned to the Operations &amp; Logistics team. Next scheduled oil change due at 75,000 km. Minor bodywork repair completed at certified partner workshop in February 2026.</span>
+        </div>
+      </div>
+
+      <!-- Parent Asset -->
+      <div class="section-title">Parent Asset</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Name</label>
+          <span>fleet_hub_01</span>
+        </div>
+        <div class="field">
+          <label>ID</label>
+          <span>ASST00000012</span>
+        </div>
+        <div class="field hidden-field">
+          <label>Key</label>
+          <span>204</span>
+        </div>
+      </div>
+
+      <!-- Attachment -->
+      <div class="section-title">Attachment</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Name</label>
+          <span>Insurance Certificate 2026</span>
+        </div>
+        <div class="field">
+          <label>ID</label>
+          <span>INS2026-001</span>
+        </div>
+        <div class="field hidden-field">
+          <label>Key</label>
+          <span>92</span>
+        </div>
+      </div>
+
+      <!-- Valuation -->
+      <div class="section-title">Valuation</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Asset Cost</label>
+          <span>$28,500.00</span>
+        </div>
+        <div class="field">
+          <label>Salvage Value</label>
+          <span>$3,000.00</span>
+        </div>
+        <div class="field">
+          <label>Depreciate</label>
+          <span><span class="badge badge-yes">Yes</span></span>
+        </div>
+        <div class="field">
+          <label>Cip asset</label>
+          <span><span class="badge badge-yes">Yes</span></span>
+        </div>
+      </div>
+
+      <!-- Allocation -->
+      <div class="section-title">Allocation</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Allocation</label>
+          <span>75%</span>
+        </div>
+        <div class="field">
+          <label>Department</label>
+          <span>Operations &amp; Logistics</span>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <span>Chicago Warehouse — Bay 2</span>
+        </div>
+        <div class="field">
+          <label>Class</label>
+          <span>Fleet Assets</span>
+        </div>
+      </div>
+
+      <!-- Depreciation Rules -->
+      <div class="section-title">Depreciation Rules</div>
+      <div class="depreciation-rules-wrapper">
+
+        <!-- Rule 1: Straight Line -->
+        <div class="depreciation-rule">
+          <div class="rule-sub-title">Rule 1 — Straight Line</div>
+          <div class="rule-field-grid">
+            <div class="rule-field">
+              <label>Method Name</label>
+              <span>Straight Line</span>
+            </div>
+            <div class="rule-field">
+              <label>Method ID</label>
+              <span>SLN</span>
+            </div>
+            <div class="rule-field hidden-field">
+              <label>Method Key</label>
+              <span>1</span>
+            </div>
+            <div class="rule-field">
+              <label>Rate (%)</label>
+              <span>8</span>
+            </div>
+            <div class="rule-field">
+              <label>Useful Life</label>
+              <span>7 years</span>
+            </div>
+          </div>
+          <div class="posting-rule-block">
+            <div class="rule-sub-title">Journal Posting Rule</div>
+            <div class="rule-field-grid">
+              <div class="rule-field">
+                <label>Posting Rule Name</label>
+                <span>Tax Accrual Book</span>
+              </div>
+              <div class="rule-field">
+                <label>Convention</label>
+                <span>Half Year</span>
+              </div>
+              <div class="rule-field">
+                <label>Is Tax</label>
+                <span><span class="badge badge-yes">Yes</span></span>
+              </div>
+              <div class="rule-field">
+                <label>Life Units</label>
+                <span>Years</span>
+              </div>
+              <div class="rule-field">
+                <label>Journal Book ID</label>
+                <span>T</span>
+              </div>
+              <div class="rule-field">
+                <label>Journal ID</label>
+                <span>TAX</span>
+              </div>
+              <div class="rule-field hidden-field">
+                <label>Key</label>
+                <span>1</span>
+              </div>
+              <div class="rule-field hidden-field">
+                <label>ID</label>
+                <span>TAX</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rule 2: 150% Declining Balance -->
+        <div class="depreciation-rule">
+          <div class="rule-sub-title">Rule 2 — 150% Declining Balance</div>
+          <div class="rule-field-grid">
+            <div class="rule-field">
+              <label>Method Name</label>
+              <span>150% declining balance</span>
+            </div>
+            <div class="rule-field">
+              <label>Method ID</label>
+              <span>150DB</span>
+            </div>
+            <div class="rule-field hidden-field">
+              <label>Method Key</label>
+              <span>-3</span>
+            </div>
+            <div class="rule-field">
+              <label>Rate (%)</label>
+              <span>15</span>
+            </div>
+            <div class="rule-field">
+              <label>Useful Life</label>
+              <span>5 years</span>
+            </div>
+          </div>
+          <div class="posting-rule-block">
+            <div class="rule-sub-title">Journal Posting Rule</div>
+            <div class="rule-field-grid">
+              <div class="rule-field">
+                <label>Posting Rule Name</label>
+                <span>Tax IFER-AUS Accrual Book</span>
+              </div>
+              <div class="rule-field">
+                <label>Convention</label>
+                <span>Half Year</span>
+              </div>
+              <div class="rule-field">
+                <label>Is Tax</label>
+                <span><span class="badge badge-yes">Yes</span></span>
+              </div>
+              <div class="rule-field">
+                <label>Life Units</label>
+                <span>Years</span>
+              </div>
+              <div class="rule-field">
+                <label>Journal Book ID</label>
+                <span>IFER</span>
+              </div>
+              <div class="rule-field">
+                <label>Journal ID</label>
+                <span>IFER-AUS</span>
+              </div>
+              <div class="rule-field hidden-field">
+                <label>Key</label>
+                <span>2</span>
+              </div>
+              <div class="rule-field hidden-field">
+                <label>ID</label>
+                <span>TAX IFER-AUS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rule 3: Daily -->
+        <div class="depreciation-rule">
+          <div class="rule-sub-title">Rule 3 — Daily</div>
+          <div class="rule-field-grid">
+            <div class="rule-field">
+              <label>Method Name</label>
+              <span>Daily</span>
+            </div>
+            <div class="rule-field">
+              <label>Method ID</label>
+              <span>DR</span>
+            </div>
+            <div class="rule-field hidden-field">
+              <label>Method Key</label>
+              <span>-4</span>
+            </div>
+            <div class="rule-field">
+              <label>Rate (%)</label>
+              <span>12</span>
+            </div>
+            <div class="rule-field">
+              <label>Useful Life</label>
+              <span>3 years</span>
+            </div>
+          </div>
+          <div class="posting-rule-block">
+            <div class="rule-sub-title">Journal Posting Rule</div>
+            <div class="rule-field-grid">
+              <div class="rule-field">
+                <label>Posting Rule Name</label>
+                <span>Finance Bank Accrual Book</span>
+              </div>
+              <div class="rule-field">
+                <label>Convention</label>
+                <span>Full Month</span>
+              </div>
+              <div class="rule-field">
+                <label>Is Tax</label>
+                <span><span class="badge badge-no">No</span></span>
+              </div>
+              <div class="rule-field">
+                <label>Life Units</label>
+                <span>Months</span>
+              </div>
+              <div class="rule-field">
+                <label>Journal Book ID</label>
+                <span>A</span>
+              </div>
+              <div class="rule-field">
+                <label>Journal ID</label>
+                <span>BAJ</span>
+              </div>
+              <div class="rule-field hidden-field">
+                <label>Key</label>
+                <span>4</span>
+              </div>
+              <div class="rule-field hidden-field">
+                <label>ID</label>
+                <span>FIN Bank</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
+
