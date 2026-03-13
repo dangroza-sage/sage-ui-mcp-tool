@@ -43,6 +43,8 @@ See [HOW_TO_INSTALL_EXTENSION.md](HOW_TO_INSTALL_EXTENSION.md) for the full step
 2.  **Open the Inspector:**
     Click the extension's action icon (the puzzle piece or pinned icon) in the Chrome toolbar. This will open the **Side Panel**.
 
+    * Use the top navigation to switch between the main **Assistant** panel and the separate **Menu Search** page.
+
 3.  **Inspect Tools:**
     * The current active tab is always the tool-execution target.
     * Choose a **Source Tab** if you want to pull text from another open page into the prompt box.
@@ -64,6 +66,11 @@ See [HOW_TO_INSTALL_EXTENSION.md](HOW_TO_INSTALL_EXTENSION.md) for the full step
     * Pick a **Source Tab** from the current window.
     * Click **Insert Source Tab Text into Prompt**.
     * The extension will import the current selection from that tab when available, otherwise it falls back to the page text.
+
+6.  **Search Page Menus:**
+    * Open **Menu Search** from the top navigation in the side panel.
+    * The extension reads menu items from the current active tab using the content script.
+    * Search by label and click **Open** to activate the selected item.
 
 ## Disclaimer
 

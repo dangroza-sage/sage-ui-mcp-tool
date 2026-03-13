@@ -28,6 +28,25 @@ chrome.runtime.onMessage.addListener(({ action, name, inputArgs }, _, reply) => 
       return;
     }
 
+    if (action == 'EXTRACT_MENU_ITEMS') {
+      reply({
+        title: document.title,
+        url: location.href,
+        items: extractMenuItems(),
+      });
+      return;
+    }
+
+    if (action == 'ACTIVATE_MENU_ITEM') {
+      try {
+        const result = activateMenuItem(inputArgs);
+        reply({ ok: true, ...result });
+      } catch (error) {
+        reply({ ok: false, error: error.message || String(error) });
+      }
+      return;
+    }
+
     if (!navigator.modelContextTesting) {
       throw new Error('Error: You must run Chrome with the "WebMCP for testing" flag enabled.');
     }
@@ -102,4 +121,196 @@ function extractPageText() {
     source: selectedText ? 'selection' : 'page',
     truncated: text.length > limit,
   };
+}
+
+function extractMenuItems() {
+  const selectors = [
+    '.qx-siamenu-main .qx-menu-item a',
+    '.qx-siamenu-main .qx-menu-item',
+    '[role="menuitem"]',
+    'nav a',
+    '.menu a',
+    '.nav a',
+    'header a',
+  ];
+
+  const candidates = selectors.flatMap((selector) => {
+    return Array.from(document.querySelectorAll(selector)).map((element) => ({
+      element,
+      selector,
+    }));
+  });
+
+  const seen = new Set();
+  const items = [];
+
+  for (const { element, selector } of candidates) {
+    const text = normalizeMenuText(element.innerText || element.textContent || '');
+    if (!text) continue;
+
+    const href = element.getAttribute('href') || element.closest('a')?.getAttribute('href') || '';
+    const key = `${text}::${href}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    items.push({
+      text,
+      href,
+      selector: buildElementSelector(element),
+      sourceSelector: selector,
+    });
+  }
+
+  return items.slice(0, 500);
+}
+
+function activateMenuItem(inputArgs) {
+  const payload =
+    typeof inputArgs === 'string' ? JSON.parse(inputArgs || '{}') : inputArgs || {};
+  const { selector, href, text } = payload;
+  const currentSessionToken = extractSessionToken(location.href);
+
+  let target = selector ? document.querySelector(selector) : null;
+  if (!target && text) {
+    target = findMenuElementByText(text, href);
+  }
+
+  if (target) {
+    const actionTarget = resolveMenuActionTarget(target, href);
+    actionTarget.scrollIntoView({ block: 'center', inline: 'nearest' });
+
+    if (href?.startsWith('javascript:')) {
+      if (clickElement(actionTarget)) {
+        return { ok: true, method: 'legacy-click' };
+      }
+
+      const extractedUrl = applySessionToken(extractUrlFromJavascriptHref(href), currentSessionToken);
+      if (extractedUrl) {
+        location.href = new URL(extractedUrl, location.href).href;
+        return { ok: true, method: 'legacy-location' };
+      }
+
+      throw new Error('Legacy menu action could not be resolved safely.');
+    }
+
+    if (clickElement(actionTarget)) {
+      return { ok: true, method: 'click' };
+    }
+  }
+
+  if (href && !href.startsWith('javascript:')) {
+    location.href = new URL(applySessionToken(href, currentSessionToken), location.href).href;
+    return { ok: true, method: 'location' };
+  }
+
+  throw new Error('Could not locate the selected menu item on the page.');
+}
+
+function normalizeMenuText(text) {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function extractSessionToken(value) {
+  const match = String(value || '').match(/(?:\?|&|%3[fF]|%26)\.?sess(?:=|%3[dD])([^&#%]+)/i);
+  return match?.[1] || '';
+}
+
+function applySessionToken(value, sessionToken) {
+  if (!sessionToken) return value;
+
+  const source = String(value || '');
+  const encodedUpdated = source.replace(/(\.?sess%3[dD])([^&#%]*)/i, `$1${sessionToken}`);
+  if (encodedUpdated !== source) {
+    return encodedUpdated;
+  }
+
+  const plainUpdated = source.replace(/(\.?sess=)([^&#]*)/i, `$1${sessionToken}`);
+  if (plainUpdated !== source) {
+    return plainUpdated;
+  }
+
+  return source;
+}
+
+function buildElementSelector(element) {
+  if (!element) return '';
+  if (element.id) return `#${CSS.escape(element.id)}`;
+
+  const segments = [];
+  let current = element;
+  while (current && current.nodeType === Node.ELEMENT_NODE && current !== document.body) {
+    let segment = current.tagName.toLowerCase();
+    if (current.classList.length > 0) {
+      segment += `.${Array.from(current.classList).slice(0, 2).map((name) => CSS.escape(name)).join('.')}`;
+    }
+
+    const siblings = Array.from(current.parentElement?.children || []).filter(
+      (child) => child.tagName === current.tagName,
+    );
+    if (siblings.length > 1) {
+      segment += `:nth-of-type(${siblings.indexOf(current) + 1})`;
+    }
+
+    segments.unshift(segment);
+
+    const selector = segments.join(' > ');
+    if (document.querySelectorAll(selector).length === 1) {
+      return selector;
+    }
+
+    current = current.parentElement;
+  }
+
+  return segments.join(' > ');
+}
+
+function findMenuElementByText(text, href) {
+  const normalizedTargetText = normalizeMenuText(text || '');
+  const candidates = Array.from(
+    document.querySelectorAll('.qx-siamenu-main .qx-menu-item, [role="menuitem"], nav a, .menu a, .nav a, header a'),
+  );
+
+  return candidates.find((element) => {
+    const elementText = normalizeMenuText(element.innerText || element.textContent || '');
+    const elementHref = element.getAttribute('href') || '';
+    return elementText === normalizedTargetText && (!href || href === elementHref);
+  });
+}
+
+function resolveMenuActionTarget(target, href) {
+  const anchor = target.matches?.('a') ? target : target.closest?.('a');
+  if (href?.startsWith('javascript:') && anchor) {
+    return (
+      anchor.closest('.qx-menu-item, [role="menuitem"], li, button') ||
+      anchor.parentElement ||
+      target
+    );
+  }
+
+  return anchor || target;
+}
+
+function clickElement(element) {
+  if (!element) return false;
+
+  element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+  element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+  const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+  const notCancelled = element.dispatchEvent(clickEvent);
+
+  if (notCancelled && typeof element.click === 'function' && !element.matches('a[href^="javascript:"]')) {
+    element.click();
+  }
+
+  return true;
+}
+
+function extractUrlFromJavascriptHref(href) {
+  const source = String(href || '').replace(/^javascript:/i, '').trim();
+  const openInIFrameMatch = source.match(/^openInIFrame\((['"])(.*?)\1\s*,\s*(['"])(.*?)\3\)$/i);
+  if (openInIFrameMatch) {
+    return openInIFrameMatch[4] || '';
+  }
+  const quotedMatch = source.match(/["']([^"']+(?:\.aspx|\.html|\/[^"']*))?["']/i);
+  return quotedMatch?.[1] || '';
 }
