@@ -6,8 +6,8 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 10px;
-  background-color: #f9f9f9;
-  color: #333;
+  background-color: #333;
+  color: #e5e5e5;
 }
 
 h2 {
@@ -27,6 +27,23 @@ h1 {
   gap: 12px;
   margin-bottom: 12px;
 }
+#toolFilterInput {
+  display: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 
 .toggle-button {
   display: inline-flex;
@@ -40,6 +57,47 @@ h1 {
   line-height: 1;
   align-self: flex-start;
   border-radius: 999px;
+}
+
+.button-with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inline-field-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.inline-field-row select {
+  flex: 0 1 70vw;
+  width: 70vw;
+}
+
+.inline-icon-button {
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.button-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.toggle-button .button-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .toggle-button[aria-pressed='true'] {
@@ -73,8 +131,8 @@ button:hover {
 
 #promptResults,
 #toolResults {
-  background: #222;
-  color: #fff;
+  background: #1f1f1f;
+  color: #f9fafb;
   line-height: 2;
   padding: 0 4px;
   border-radius: 4px;
@@ -130,7 +188,7 @@ button:hover {
   margin-bottom: 15px;
   overflow-x: auto;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #525252;
   overflow-y: scroll;
   max-height: 400px;
   display: block;
@@ -143,18 +201,19 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
-  background: white;
+  background: #3a3a3a;
 }
 
 th,
 td {
   text-align: left;
   padding: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #525252;
+  color: #e5e7eb;
 }
 
 th {
-  background-color: #f3f4f6;
+  background-color: #444;
   font-weight: 600;
   position: sticky;
   top: 0;
@@ -164,7 +223,7 @@ tr:last-child td {
   border-bottom: none;
 }
 tr:nth-child(even) {
-  background-color: #fcfcfc;
+  background-color: #363636;
 }
 
 /* Ensure padding doesn't break width: 100% */
@@ -183,15 +242,19 @@ tr:nth-child(even) {
 .field-hint {
   margin-top: 4px;
   font-size: 11px;
-  color: #6b7280;
+  color: #c7c7c7;
+}
+
+#fillDataPromptTemplate {
+  min-height: 56px;
 }
 
 .tool-details {
   margin-bottom: 12px;
   padding: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #525252;
   border-radius: 6px;
-  background: #fff;
+  background: #3a3a3a;
 }
 
 .tool-details-header {
@@ -204,17 +267,19 @@ tr:nth-child(even) {
   font-size: 12px;
   line-height: 1.4;
   margin-bottom: 8px;
+  color: #e5e5e5;
 }
 
 .tool-details pre {
   margin: 0;
   max-height: 200px;
   overflow: auto;
-  background: #f3f4f6;
+  background: #262626;
   border-radius: 4px;
   padding: 8px;
   white-space: pre-wrap;
   word-break: break-word;
+  color: #f3f4f6;
 }
 
 label {
@@ -222,20 +287,24 @@ label {
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600; /* Matches th weight */
-  color: #333;
+  color: #f3f4f6;
 }
 
-select,
-textarea, input {
+
+select, textarea, input {
   width: 100%;
   padding: 8px 10px; /* Matches button padding logic */
-  border: 1px solid #e5e7eb; /* Matches table border */
+  border: 1px solid #5a5a5a; /* Matches dark surface border */
   border-radius: 6px; /* Matches button/container radius */
-  background-color: white;
+  background-color: #404040;
   font-family: monospace;
   font-size: 13px;
-  color: #333;
+  color: #f9fafb;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+select {
+  width: 70vw;
 }
 
 #userPromptText {
@@ -271,17 +340,17 @@ textarea {
 
 /* Placeholder text color to match vibe */
 ::placeholder {
-  color: #a3a3a3;
+  color: #bdbdbd;
 }
 
 /* Disabled state matching the table header gray */
 select:disabled,
 textarea:disabled,
 button:disabled {
-  background-color: #f3f4f6 !important;
+  background-color: #474747 !important;
   color: #9ca3af !important;
   cursor: not-allowed;
-  outline: 1px solid #e5e7eb !important;
+  outline: 1px solid #5a5a5a !important;
   outline-offset: -1px !important;
 }
 
@@ -331,7 +400,7 @@ tbody.prettify pre {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #121212;
+    background-color: #333;
     color: #e5e5e5;
   }
 
@@ -346,9 +415,9 @@ tbody.prettify pre {
   select,
   textarea,
   input {
-    background-color: #1e1e1e;
-    border-color: #404040;
-    color: #fff;
+    background-color: #404040;
+    border-color: #5a5a5a;
+    color: #f9fafb;
   }
 
   select:focus,
@@ -363,34 +432,34 @@ tbody.prettify pre {
   }
 
   ::placeholder {
-    color: #6b7280;
+    color: #bdbdbd;
   }
 
   .field-hint {
-    color: #9ca3af;
+    color: #c7c7c7;
   }
 
   .table-container {
-    border-color: #404040;
+    border-color: #525252;
   }
 
   table {
-    background: #1e1e1e;
+    background: #3a3a3a;
   }
 
   th,
   td {
-    border-bottom-color: #404040;
-    color: #d4d4d4;
+    border-bottom-color: #525252;
+    color: #e5e7eb;
   }
 
   th {
-    background-color: #262626; /* Darker header */
-    color: #fff;
+    background-color: #444;
+    color: #f9fafb;
   }
 
   tr:nth-child(even) {
-    background-color: #232323; /* Subtle zebra striping */
+    background-color: #363636;
   }
 
   button {
@@ -421,15 +490,15 @@ tbody.prettify pre {
   select:disabled,
   textarea:disabled,
   button:disabled {
-    background-color: #262626 !important;
+    background-color: #474747 !important;
     color: #525252 !important;
-    outline-color: #404040 !important;
+    outline-color: #5a5a5a !important;
   }
 
   #promptResults,
   #toolResults {
-    background: #000;
-    border: 1px solid #333;
+    background: #1f1f1f;
+    border: 1px solid #525252;
   }
 
   #status {
@@ -449,12 +518,12 @@ tbody.prettify pre {
   }
 
   .tool-details {
-    background: #1e1e1e;
-    border-color: #404040;
+    background: #3a3a3a;
+    border-color: #525252;
   }
 
   .tool-details pre {
-    background: #111827;
-    color: #e5e7eb;
+    background: #262626;
+    color: #f3f4f6;
   }
 }

@@ -3,10 +3,21 @@
   "name": "Sage UI Smart Assistant",
   "description": "Integrate WebMCP with your Sage Intacct application for enhanced UI functionality",
   "version": "0.1.0",
+  "icons": {
+    "16": "assets/favicon.png",
+    "32": "assets/favicon.png",
+    "48": "assets/favicon.png",
+    "128": "assets/favicon.png"
+  },
   "permissions": ["sidePanel", "activeTab", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],
   "update_url": "https://clients2.google.com/service/update2/crx",
-  "action": {},
+  "action": {
+    "default_icon": {
+      "16": "assets/favicon.png",
+      "32": "assets/favicon.png"
+    }
+  },
   "background": {
     "service_worker": "background.js"
   },

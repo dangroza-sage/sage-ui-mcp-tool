@@ -13,6 +13,7 @@ const sourceTabSelect = document.getElementById('sourceTabSelect');
 const toolFilterInput = document.getElementById('toolFilterInput');
 const refreshToolsBtn = document.getElementById('refreshToolsBtn');
 const importSourceTextBtn = document.getElementById('importSourceTextBtn');
+const fillDataBtn = document.getElementById('fillDataBtn');
 const copyToClipboard = document.getElementById('copyToClipboard');
 const copyAsScriptToolConfig = document.getElementById('copyAsScriptToolConfig');
 const copyAsJSON = document.getElementById('copyAsJSON');
@@ -25,6 +26,7 @@ const formatArgsBtn = document.getElementById('formatArgsBtn');
 const executeBtn = document.getElementById('executeBtn');
 const toolResults = document.getElementById('toolResults');
 const userPromptText = document.getElementById('userPromptText');
+const fillDataPromptTemplate = document.getElementById('fillDataPromptTemplate');
 const promptBtn = document.getElementById('promptBtn');
 const traceBtn = document.getElementById('traceBtn');
 const resetBtn = document.getElementById('resetBtn');
@@ -32,6 +34,8 @@ const apiKeyBtn = document.getElementById('apiKeyBtn');
 const promptResults = document.getElementById('promptResults');
 
 const AUTO_REFRESH_STORAGE_KEY = 'autoRefreshTabsEnabled';
+const FILL_DATA_PROMPT_TEMPLATE_STORAGE_KEY = 'fillDataPromptTemplate';
+const DEFAULT_FILL_DATA_PROMPT_TEMPLATE = 'Fill the form based on follwing information:';
 
 let currentTools = [];
 let filteredTools = [];
@@ -116,6 +120,7 @@ async function initGenAI() {
   genAI = localStorage.apiKey ? new GoogleGenAI({ apiKey: localStorage.apiKey }) : undefined;
   promptBtn.disabled = !localStorage.apiKey;
   resetBtn.disabled = !localStorage.apiKey;
+  updateFillDataButtonState();
 }
 
 async function suggestUserPrompt() {
@@ -281,6 +286,10 @@ autoRefreshToggleBtn.onclick = () => {
   setAutoRefreshEnabled(!autoRefreshEnabled);
 };
 
+fillDataPromptTemplate.oninput = () => {
+  localStorage.setItem(FILL_DATA_PROMPT_TEMPLATE_STORAGE_KEY, fillDataPromptTemplate.value);
+};
+
 toolNames.onchange = updateDefaultValueForInputArgs;
 toolFilterInput.oninput = () => renderTools();
 
@@ -296,23 +305,30 @@ importSourceTextBtn.onclick = async () => {
   setStatus('Importing text from source tab…', 'info');
 
   try {
-    const result = await sendMessageToTab(selectedSourceTabId, { action: 'EXTRACT_PAGE_TEXT' });
-    const title = result.title || getTabById(selectedSourceTabId)?.title || 'Source tab';
-    const importedBlock = [
-      `Source tab: ${title}`,
-      result.url ? `URL: ${result.url}` : undefined,
-      `Text source: ${result.source === 'selection' ? 'current selection' : 'page content'}`,
-      '',
-      result.text || '(No readable text found)',
-      result.truncated ? '[Text truncated by extension]' : undefined,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    userPromptText.value = [userPromptText.value.trim(), importedBlock].filter(Boolean).join('\n\n');
+    const { contextData, title } = await getContextDataFromSourceTab();
+    userPromptText.value = [userPromptText.value.trim(), contextData].filter(Boolean).join('\n\n');
     setStatus(`Imported text from "${title}".`, 'success');
   } catch (error) {
     setStatus(`Could not read the selected source tab: ${error.message || error}`, 'error');
+  }
+};
+
+fillDataBtn.onclick = async () => {
+  if (!selectedSourceTabId) {
+    setStatus('Select a source tab before using Fill data.', 'error');
+    return;
+  }
+
+  try {
+    const { contextData, title } = await getContextDataFromSourceTab();
+    const promptPrefix = getFillDataPromptTemplate();
+    userPromptText.value = `${promptPrefix}\n\n${contextData}`;
+    setStatus(`Submitting Fill data prompt using "${title}".`, 'info');
+    await promptAI();
+  } catch (error) {
+    trace.push({ error });
+    setStatus(`Could not fill data from the selected source tab: ${error.message || error}`, 'error');
+    logPrompt(`⚠️ Error: "${error}"`);
   }
 };
 
@@ -351,6 +367,7 @@ async function executeTool(tabId, name, inputArgs) {
 
 async function init() {
   renderAutoRefreshToggle();
+  initFillDataPromptTemplate();
   syncAutoRefreshListeners();
   await initGenAI();
   await refreshTabs();
@@ -434,9 +451,18 @@ function setAutoRefreshEnabled(enabled) {
 function renderAutoRefreshToggle() {
   autoRefreshToggleBtn.setAttribute('aria-pressed', String(autoRefreshEnabled));
   const label = `Auto-refresh tabs: ${autoRefreshEnabled ? 'On' : 'Off'}`;
-  autoRefreshToggleBtn.textContent = '↻';
   autoRefreshToggleBtn.setAttribute('aria-label', label);
   autoRefreshToggleBtn.setAttribute('title', label);
+}
+
+function initFillDataPromptTemplate() {
+  fillDataPromptTemplate.value =
+    localStorage.getItem(FILL_DATA_PROMPT_TEMPLATE_STORAGE_KEY) || DEFAULT_FILL_DATA_PROMPT_TEMPLATE;
+}
+
+function getFillDataPromptTemplate() {
+  const value = fillDataPromptTemplate.value.trim();
+  return value || DEFAULT_FILL_DATA_PROMPT_TEMPLATE;
 }
 
 function syncAutoRefreshListeners() {
@@ -527,6 +553,11 @@ function shouldInjectContentScript(error) {
 function renderTabSelectors() {
   renderTabSelect(sourceTabSelect, selectedSourceTabId, 'No source tab available');
   importSourceTextBtn.disabled = !selectedSourceTabId;
+  updateFillDataButtonState();
+}
+
+function updateFillDataButtonState() {
+  fillDataBtn.disabled = !selectedSourceTabId || !localStorage.apiKey;
 }
 
 function renderTabSelect(select, selectedId, emptyLabel) {
@@ -605,6 +636,27 @@ function getHostname(url) {
   } catch {
     return '';
   }
+}
+
+async function getContextDataFromSourceTab() {
+  if (!selectedSourceTabId) {
+    throw new Error('No source tab selected.');
+  }
+
+  const result = await sendMessageToTab(selectedSourceTabId, { action: 'EXTRACT_PAGE_TEXT' });
+  const title = result.title || getTabById(selectedSourceTabId)?.title || 'Source tab';
+  const contextData = [
+    `Source tab: ${title}`,
+    result.url ? `URL: ${result.url}` : undefined,
+    `Text source: ${result.source === 'selection' ? 'current selection' : 'page content'}`,
+    '',
+    result.text || '(No readable text found)',
+    result.truncated ? '[Text truncated by extension]' : undefined,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return { contextData, title };
 }
 
 function renderTools({ haveNewTools = false } = {}) {

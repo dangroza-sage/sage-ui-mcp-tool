@@ -8,12 +8,17 @@
   <head>
     <title>Tool Inspector</title>
     <meta charset="utf-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/favicon.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="container">
       <div class="page-header">
-        <h1>Sage UI Smart Assistant</h1>
+        <div class="brand">
+          <img class="brand-logo" src="assets/logo.png" alt="Sage UI Smart Assistant logo" />
+          <h1>Sage UI Smart Assistant</h1>
+        </div>
       </div>
       <h2 class="collapsible-header">WebMCP Tools</h2>
       <div class="section-content">
@@ -29,35 +34,40 @@
           aria-label="Auto-refresh tabs: Off"
           title="Auto-refresh tabs: Off"
         >
-          ↻
+          <img
+            class="button-icon"
+            src="assets/icons/90x90_360-reload_green-on-transparent_icon (original).png"
+            alt=""
+            aria-hidden="true"
+          />
         </button>
         <div class="form-group compact">
           <label for="sourceTabSelect">Source Tab</label>
-          <select id="sourceTabSelect"></select>
+          <div class="inline-field-row">
+            <select id="sourceTabSelect"></select>
+            <button id="refreshToolsBtn" class="secondary button-with-icon inline-icon-button" type="button">
+              <img class="button-icon" src="assets/icons/90x90_360-reload_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
+              <span>Refresh</span>
+            </button>
+          </div>
           <div class="field-hint">Import page text from another open tab.</div>
         </div>
       </div>
 
       <div class="toolbar">
         <input id="toolFilterInput" type="search" placeholder="Filter tools by name or description" />
-        <button id="refreshToolsBtn" class="secondary" type="button">Refresh</button>
+
       </div>
 
       <div class="form-group compact">
-        <button id="importSourceTextBtn" class="secondary" type="button">Insert Source Tab Text into Prompt</button>
-      </div>
-
-      <div class="table-container">
-        <table id="resultsTable">
-          <thead>
-            <tr id="tableHeaderRow"></tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-        <div id="copyToClipboard">
-          <span id="copyAsScriptToolConfig">📝 Copy as ScriptToolConfig</span>
-          <span id="copyAsJSON">📝 Copy as JSON</span>
-        </div>
+        <button id="fillDataBtn" class="secondary button-with-icon" type="button">
+          <img class="button-icon" src="assets/icons/90x90_click_green-on-transparent_icon.png" alt="" aria-hidden="true" />
+          <span>Fill data</span>
+        </button>
+        <button id="importSourceTextBtn" class="secondary button-with-icon" type="button">
+          <img class="button-icon" src="assets/icons/90x90_pin-map_green-on-transparent_icon.png" alt="" aria-hidden="true" />
+          <span>Insert Source Tab Text into Prompt</span>
+        </button>
       </div>
       </div>
 
@@ -69,16 +79,30 @@
         <textarea id="userPromptText"></textarea>
       </div>
 
-      <div class="form-group">
-        <button id="promptBtn" disabled>Send</button>
-        <button id="resetBtn" class="secondary" disabled>Reset</button>
-        <button id="apiKeyBtn" class="secondary">Set Gemini API key</button>
-        <button id="traceBtn" class="secondary">Copy trace</button>
+      <div class="form-group button-row">
+        <button id="promptBtn" class="button-with-icon" disabled>
+          <img class="button-icon" src="assets/icons/90x90_play-button_green-on-transparent_icon.png" alt="" aria-hidden="true" />
+          <span>Send</span>
+        </button>
+        <button id="resetBtn" class="secondary button-with-icon" disabled>
+          <img class="button-icon" src="assets/icons/90x90_360-reset_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
+          <span>Reset</span>
+        </button>
       </div>
 
       <pre id="promptResults"></pre>
 
-      <div class="form-group">
+      <pre id="toolResults"></pre>
+
+        <button id="apiKeyBtn" class="secondary button-with-icon">
+          <img class="button-icon" src="assets/icons/90x90_key-hole_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
+          <span>Set Gemini API key</span>
+        </button>
+      </div>
+
+      <h2 class="collapsible-header collapsed">Tech Dev Info</h2>
+      <div class="section-content is-hidden">
+        <div class="form-group">
         <label for="toolNames">Tool</label>
         <select id="toolNames"></select>
       </div>
@@ -94,12 +118,38 @@
         <textarea id="inputArgsText">{"text": "hello world"}</textarea>
       </div>
 
-      <div class="form-group">
-        <button id="formatArgsBtn" class="secondary" type="button">Format JSON</button>
-        <button id="executeBtn">Execute Tool</button>
+      <div class="form-group button-row">
+        <button id="formatArgsBtn" class="secondary button-with-icon" type="button">
+          <img class="button-icon" src="assets/icons/90x90_checklist_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
+          <span>Format JSON</span>
+        </button>
+        <button id="executeBtn" class="button-with-icon">
+          <img class="button-icon" src="assets/icons/90x90_lightning_green-on-transparent_icon.png" alt="" aria-hidden="true" />
+          <span>Execute Tool</span>
+        </button>
+        <button id="traceBtn" class="secondary button-with-icon">
+          <img class="button-icon" src="assets/icons/90x90_note_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
+          <span>Copy trace</span>
+        </button>
       </div>
+        <div class="form-group">
+          <label for="fillDataPromptTemplate">Fill data prompt prefix</label>
+          <textarea id="fillDataPromptTemplate">Fill the form based on follwing information:</textarea>
+          <div class="field-hint">This text is prepended to source-tab context when you click Fill data.</div>
+        </div>
 
-      <pre id="toolResults"></pre>
+        <div class="table-container">
+          <table id="resultsTable">
+            <thead>
+              <tr id="tableHeaderRow"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div id="copyToClipboard">
+            <span id="copyAsScriptToolConfig">📝 Copy as ScriptToolConfig</span>
+            <span id="copyAsJSON">📝 Copy as JSON</span>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="sidebar.js"></script>
