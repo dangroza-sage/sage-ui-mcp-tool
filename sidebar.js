@@ -372,6 +372,10 @@ async function init() {
   await initGenAI();
   await refreshTabs();
   await refreshTargetTools();
+
+  if (autoRefreshEnabled) {
+    scheduleAutoRefresh(0);
+  }
 }
 
 async function refreshTabs() {
@@ -446,6 +450,12 @@ function setAutoRefreshEnabled(enabled) {
   localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(enabled));
   renderAutoRefreshToggle();
   syncAutoRefreshListeners();
+
+  if (enabled) {
+    scheduleAutoRefresh(0);
+  } else {
+    clearTimeout(autoRefreshTimeoutId);
+  }
 }
 
 function renderAutoRefreshToggle() {
@@ -470,6 +480,8 @@ function syncAutoRefreshListeners() {
   chrome.tabs.onUpdated.removeListener(handleAutoRefreshEvent);
   chrome.tabs.onCreated.removeListener(handleAutoRefreshEvent);
   chrome.tabs.onRemoved.removeListener(handleAutoRefreshEvent);
+  window.removeEventListener('focus', handleAutoRefreshEvent);
+  document.removeEventListener('visibilitychange', handleVisibilityAutoRefreshEvent);
 
   if (!autoRefreshEnabled) {
     return;
@@ -479,13 +491,20 @@ function syncAutoRefreshListeners() {
   chrome.tabs.onUpdated.addListener(handleAutoRefreshEvent);
   chrome.tabs.onCreated.addListener(handleAutoRefreshEvent);
   chrome.tabs.onRemoved.addListener(handleAutoRefreshEvent);
+  window.addEventListener('focus', handleAutoRefreshEvent);
+  document.addEventListener('visibilitychange', handleVisibilityAutoRefreshEvent);
 }
 
 function handleAutoRefreshEvent() {
   scheduleAutoRefresh();
 }
 
-function scheduleAutoRefresh() {
+function handleVisibilityAutoRefreshEvent() {
+  if (document.visibilityState !== 'visible') return;
+  scheduleAutoRefresh(0);
+}
+
+function scheduleAutoRefresh(delay = 250) {
   clearTimeout(autoRefreshTimeoutId);
   autoRefreshTimeoutId = setTimeout(async () => {
     try {
@@ -494,7 +513,7 @@ function scheduleAutoRefresh() {
     } catch (error) {
       setStatus(String(error), 'error');
     }
-  }, 250);
+  }, delay);
 }
 
 async function getTabSupport(tabId, { refresh = false } = {}) {

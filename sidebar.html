@@ -19,13 +19,6 @@
           <img class="brand-logo" src="assets/logo.png" alt="Sage UI Smart Assistant logo" />
           <h1>Sage UI Smart Assistant</h1>
         </div>
-      </div>
-      <h2 class="collapsible-header">WebMCP Tools</h2>
-      <div class="section-content">
-
-      <div id="status"></div>
-
-      <div class="tab-picker-grid">
         <button
           id="autoRefreshToggleBtn"
           class="secondary toggle-button"
@@ -41,6 +34,13 @@
             aria-hidden="true"
           />
         </button>
+      </div>
+      <h2 class="collapsible-header">WebMCP Tools</h2>
+      <div class="section-content">
+
+      <div id="status"></div>
+
+      <div class="tab-picker-grid">
         <div class="form-group compact">
           <label for="sourceTabSelect">Source Tab</label>
           <div class="inline-field-row">
@@ -93,15 +93,17 @@
       <pre id="promptResults"></pre>
 
       <pre id="toolResults"></pre>
-
-        <button id="apiKeyBtn" class="secondary button-with-icon">
-          <img class="button-icon" src="assets/icons/90x90_key-hole_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
-          <span>Set Gemini API key</span>
-        </button>
       </div>
 
       <h2 class="collapsible-header collapsed">Tech Dev Info</h2>
+
       <div class="section-content is-hidden">
+
+      <button id="apiKeyBtn" class="secondary button-with-icon">
+          <img class="button-icon" src="assets/icons/90x90_key-hole_green-on-transparent_icon (original).png" alt="" aria-hidden="true" />
+          <span>Set Gemini API key</span>
+      </button>
+
         <div class="form-group">
         <label for="toolNames">Tool</label>
         <select id="toolNames"></select>
